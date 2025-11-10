@@ -37,6 +37,8 @@ class PSDModel(reggae, asymptotic):
         
         self.nu_2 = nu_2
 
+        self.asy = False
+
     # def init_psdmodel(self, f, numax, nu_0, d02, env_width, alpha_p=0, lw=1/50):
     #     self.f = f
 
@@ -141,7 +143,8 @@ class PSDModel(reggae, asymptotic):
 
         return super().getl1(self.n_g, nu_0, numax, dnu, d02, n_p,
                              theta_reg.d01, theta_reg.dPi0, theta_reg.p_L, 
-                             theta_reg.p_D, theta_reg.epsilon_g, theta_reg.alpha_g, 
+                             theta_reg.p_D, theta_reg.epsilon_g, theta_reg.alpha_g,
+                             asy=self.asy,
                              **kwargs)
 
     def _l1model(self, theta_asy, theta_reg, update_n_g=False, amps=None, dnu_p=0, dnu_g=0):

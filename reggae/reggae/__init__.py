@@ -6,6 +6,7 @@ import numpy as np
 #from numpy.polynomial.polynomial import polyval2d
 #import scipy.linalg as sla
 
+from functools import partial
 import jax.numpy as jnp
 import jax
 jax.config.update('jax_enable_x64', True)
@@ -355,9 +356,9 @@ class reggae():
 
 
     @staticmethod
-    @jax.jit
+    @partial(jax.jit, static_argnums=(12,))
     def getl1(n_g, nu0_p, numax, dnu, d02, n_p, d01, dPi0, p_L, p_D, 
-              epsilon_g, alpha_g, *, dnu_p=0, dnu_g=0, asy=False):
+              epsilon_g, alpha_g, asy=False, *, dnu_p=0, dnu_g=0):
         """Compute the l=1 mode frequencies using the matrix formalism
 
         Parameters
