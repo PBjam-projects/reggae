@@ -47,21 +47,27 @@ class DipoleStar:
         klass: self
             reggae.DipoleStar class self.
         star: object
-            Instance of the pbjam.star or pbjam.modeID.modeIDsampler classes. 
+            Instance of pbjam.star or pbjam.modeID.modeIDsampler classes. 
         """
 
         pbjam_model = klass.make_pbjam_model(star)
-        self = klass(np.array(star.s / pbjam_model), star.f)
-        self.s_raw = np.array(star.s)
 
-        if hasattr(star, 'modeID') and isinstance(star, pbjam.modeID.modeIDsampler):
-
-            self.pg = SNRPeriodogram(self.f * u.uHz, u.Quantity(self.s))
-
+        if hasattr(star, 'modeID') and hasattr(star.modeID, 'sel'):
+            sel = star.modeID.sel
+            f = star.f[sel]
+            s = star.s[sel]
         else:
+            f = star.f
+            s = star.s
 
+        self = klass(np.array(s / pbjam_model), f)
+        self.s_raw = np.array(s)
+
+        if hasattr(star, 'pg'):
             self.pg = star.pg
             self.pg.power = u.Quantity(self.s)
+        else:
+            self.pg = SNRPeriodogram(self.f * u.uHz, u.Quantity(self.s))
 
         # theta_asy
 
@@ -268,8 +274,11 @@ class DipoleStar:
             ThetaAsy class instance, containing l=2,0 and background model parameters.
         """
 
-        if hasattr(star, 'modeID') and isinstance(star, pbjam.modeID.modeIDsampler):
-            s = lambda x: float(star.result['summary'][x][0])
+        if hasattr(star, 'modeID'):
+            if hasattr(star.modeID, 'l20result'):
+                s = lambda x: float(star.modeID.l20result['summary'][x][0])
+            else: # dev version of PBJam
+                s = lambda x: float(star.result['summary'][x][0])
             
             θ = ThetaAsy(
                     log_numax=np.log10(s('numax')),
@@ -281,8 +290,10 @@ class DipoleStar:
                     log_env_width=np.log10(s('env_width')),
                     log_mode_width=np.log10(s('mode_width'))
                 )
-
-            nu_0 = star.AsyFreqModel.asymptotic_nu_p(s('numax'), s('dnu'), s('eps_p'), s('alpha_p'))[0]
+            if hasattr(star, 'AsyFreqModel'):
+                nu_0 = star.AsyFreqModel.asymptotic_nu_p(s('numax'), s('dnu'), s('eps_p'), s('alpha_p'))[0]
+            else:
+                nu_0 = star.modeID.l20model.asymptotic_nu_p(s('numax'), s('dnu'), s('eps_p'), s('alpha_p'))[0]
             
             nu_2 = nu_0 - s('d02')
             
@@ -334,10 +345,13 @@ class DipoleStar:
             Spectrum model.
         """
 
-        if hasattr(star, 'modeID') and isinstance(star, pbjam.modeID.modeIDsampler):
-            return star.result['background']
+        if hasattr(star, 'modeID'): #pbjam2 star object
+            if hasattr(star.modeID, 'l20model'): #pbjam dev branch
+                return star.modeID.l20model.getMedianModel()
+            else:
+                return star.result['background']
 
-        else: # PBjam star object
+        else: # PBjam1 star object
             peakbag = star.peakbag
 
             freq = star.pg.frequency.value
