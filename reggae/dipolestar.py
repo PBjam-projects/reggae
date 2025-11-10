@@ -67,7 +67,12 @@ class DipoleStar:
             self.pg = star.pg
             self.pg.power = u.Quantity(self.s)
         else:
+            # let's ensure that the normalisations are comparable
+            self.s_raw /= np.median(self.s_raw)
+            self.s /= np.median(self.s)
+
             self.pg = SNRPeriodogram(self.f * u.uHz, u.Quantity(self.s))
+
 
         # theta_asy
 
