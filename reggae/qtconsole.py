@@ -354,6 +354,11 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
         checkbox.clicked.connect(self.sync_state)
         layout.addRow(checkbox)
 
+        checkbox = QtWidgets.QCheckBox("Use asymptotic coupling equation", None)
+        self.checkboxes['asy'] = checkbox
+        checkbox.clicked.connect(self.sync_state)
+        layout.addRow(checkbox)
+
         pair  = QtWidgets.QHBoxLayout()
 
         textbox = QtWidgets.QDoubleSpinBox()
@@ -894,6 +899,13 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
             self.reggae.l1model.nu_0 = None
             self.reggae.l1model.nu_2 = None
 
+        # 5. asymptotic coupling equation?
+
+        if self.checkboxes['asy'].isChecked():
+            self.reggae.l1model.asy = True
+        else:
+            self.reggae.l1model.asy = False
+
     def load(self, *, session=None):
         """Load GUI session output
         """
@@ -920,7 +932,8 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
                     self.n_g_lims[_].setValue(n_g_lims[i])
 
                 for _ in checkboxes:
-                    self.checkboxes[_].setChecked(checkboxes[_])
+                    if _ in self.checkboxes:
+                        self.checkboxes[_].setChecked(checkboxes[_])
 
                 self.print(f"Loaded session")
                 self.sync_state()
