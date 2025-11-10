@@ -187,7 +187,7 @@ class PSDModel(reggae, asymptotic):
         if amps is not None:
             H = H * amps
         
-        lw = jnp.sqrt((zeta*0+dnu*self.lw)**2 + (10.**(theta_asy.log_mode_width))**2)
+        lw = jnp.sqrt((zeta*0+dnu*self.lw)**2 + ((1-zeta) * 10.**(theta_asy.log_mode_width))**2)
 
         return super().l1model(self.f, nu_1, zeta, dnu, amps=H, lw=lw)
 
