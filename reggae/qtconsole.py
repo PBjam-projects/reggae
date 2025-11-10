@@ -580,7 +580,7 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
         for l in labels:
             mm = (1 if '_+' in l else (-1 if '_-' in l else 0))
             nu = nu1[mm][m]
-            sizes = np.power(1-zeta[mm][m], 2/3) * 40
+            sizes = np.power(1-zeta[mm][m], 2/3) * 200
             if l not in self._echelle_points:
                 self._echelle_points[l] = ax.scatter(nu % dnu, (nu // dnu) * dnu,
                                                             s=sizes, edgecolor='white',
@@ -686,6 +686,11 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
         
         if pbjam is None:
             pbjam = self.load_pickle("Open PBJam pickle file")
+            if isinstance(pbjam, DipoleStar):
+                # call load_reggae anyway
+                self.load_reggae(reggae=pbjam)
+                return
+
         if pbjam is not None:
             try:
                 self.reggae = DipoleStar.from_pbjam(pbjam)
@@ -851,9 +856,10 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
 
         mask = (self.reggae.f > self.spinboxes['y0'].value()) & (self.reggae.f < self.spinboxes['y1'].value())
 
-        period_echelle_power_plot(self.reggae.f[mask], self.reggae.s[mask], ν_p, ΔΠ1, q, ax=ax,
+        smooth = gaussian_filter1d(self.reggae.s, 3)
+        period_echelle_power_plot(self.reggae.f[mask], smooth[mask], ν_p, ΔΠ1, q, ax=ax,
             x0=self.spinboxes['x0'].value(), x1=self.spinboxes['x1'].value(),
-            vmin=np.median(self.reggae.s), vmax=self.spinboxes['norm'].value())
+            vmin=np.median(self.reggae.s), vmax=self.spinboxes['norm'].value() / 10)
 
         ax.set_xlabel(r"$(\tau /\Delta\Pi_1)$ mod $1$")
         ax.set_ylabel(r"$\nu/\mu$Hz")
