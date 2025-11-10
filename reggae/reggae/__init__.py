@@ -10,6 +10,8 @@ import jax.numpy as jnp
 import jax
 jax.config.update('jax_enable_x64', True)
 
+from .zeta import couple, α_to_q, ζ_p
+
 UNITS = {
         # absolute scalings inherited from Boeing
         'DPI0': 1.25e-4, # μHz¯¹
@@ -355,7 +357,7 @@ class reggae():
     @staticmethod
     @jax.jit
     def getl1(n_g, nu0_p, numax, dnu, d02, n_p, d01, dPi0, p_L, p_D, 
-              epsilon_g, alpha_g, *, dnu_p=0, dnu_g=0):
+              epsilon_g, alpha_g, *, dnu_p=0, dnu_g=0, asy=False):
         """Compute the l=1 mode frequencies using the matrix formalism
 
         Parameters
@@ -400,14 +402,22 @@ class reggae():
         deltaPi0 = UNITS['DPI0'] * dPi0 # in inverse μHz
 
         p_L = jnp.array([UNITS['P_L'] * p_L])
-
         p_D = jnp.array([UNITS['P_D'] * p_D])
 
         nu_g = reggae.asymptotic_nu_g(n_g, deltaPi0, jnp.inf, epsilon_g, numax=numax, alpha=alpha_g) + dnu_g
 
-        L, D = reggae.generate_matrices(n_p, n_g, nu1_p, nu_g, p_L, p_D)
+        if asy:
+            ω = numax / 1e6 * 2 * jnp.pi
+            α = (p_L + p_D) * ω**2
+            ΔΠ1 = deltaPi0 / jnp.sqrt(2)
+            q = α_to_q(α, dnu, ΔΠ1, numax/1e6)
 
-        nu1, zeta, E = reggae.new_modes(L, D, n_p)
+            nu1 = jnp.sort(jnp.concatenate(couple(nu1_p, nu_g, q, q)))
+            zeta = ζ_p(nu1, q, ΔΠ1, dnu, nu1_p)
+
+        else:
+            L, D = reggae.generate_matrices(n_p, n_g, nu1_p, nu_g, p_L, p_D)
+            nu1, zeta, E = reggae.new_modes(L, D, n_p)
 
         return nu1, zeta
 
