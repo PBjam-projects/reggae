@@ -354,6 +354,55 @@ class reggae():
 
         return L, D
 
+    @staticmethod
+    @jax.jit
+    def ΔΠ1(dPi0):
+        '''
+        Compute the dipole g-mode period spacing in inverse μHz,
+        given a dimensionless dPi0 parameter.
+
+        Parameters
+        ----------
+        dPi0: float
+            Dimensionless period spacing
+
+        Returns
+        -------
+        ΔΠ1: Dipole g-mode period spacing in inverse μHz
+        '''
+        return UNITS['DPI0'] * dPi0 / jnp.sqrt(2)
+
+    @staticmethod
+    @jax.jit
+    def q(dnu, numax, dPi0, p_L, p_D):
+        '''
+        Compute the equivalent asymptotic coupling strength between
+        p- and g-modes
+
+        Parameters
+        ----------
+        dnu: float 
+            Large separation for the star
+        numax: float 
+            numax for the star
+        dPi0: float
+            Dimensionless period spacing
+        p_L: float 
+            Dimensionless scaled coupling coefficient
+        p_D: float 
+            Dimensionless scaled coupling coefficient
+
+        Returns
+        -------
+        q: Equivalent asymptotic coupling strength (dimensionless)
+        '''
+        ΔΠ1 = reggae.ΔΠ1(dPi0)
+        r_L = UNITS['P_L'] * p_L
+        r_D = UNITS['P_D'] * p_D
+        ω = numax / 1e6 * 2 * jnp.pi
+        α = (r_L + r_D) * ω**2
+
+        return α_to_q(α, dnu, ΔΠ1, numax/1e6)
 
     @staticmethod
     @partial(jax.jit, static_argnums=(12,))
@@ -402,22 +451,20 @@ class reggae():
 
         deltaPi0 = UNITS['DPI0'] * dPi0 # in inverse μHz
 
-        p_L = jnp.array([UNITS['P_L'] * p_L])
-        p_D = jnp.array([UNITS['P_D'] * p_D])
+        r_L = jnp.array([UNITS['P_L'] * p_L])
+        r_D = jnp.array([UNITS['P_D'] * p_D])
 
         nu_g = reggae.asymptotic_nu_g(n_g, deltaPi0, jnp.inf, epsilon_g, numax=numax, alpha=alpha_g) + dnu_g
 
         if asy:
-            ω = numax / 1e6 * 2 * jnp.pi
-            α = (p_L + p_D) * ω**2
-            ΔΠ1 = deltaPi0 / jnp.sqrt(2)
-            q = α_to_q(α, dnu, ΔΠ1, numax/1e6)
+            ΔΠ1 = reggae.ΔΠ1(dPi0)
+            q = reggae.q(dnu, numax, dPi0, p_L, p_D)
 
             nu1 = jnp.sort(jnp.concatenate(couple(nu1_p, nu_g, q, q)))
             zeta = ζ_p(nu1, q, ΔΠ1, dnu, nu1_p)
 
         else:
-            L, D = reggae.generate_matrices(n_p, n_g, nu1_p, nu_g, p_L, p_D)
+            L, D = reggae.generate_matrices(n_p, n_g, nu1_p, nu_g, r_L, r_D)
             nu1, zeta, E = reggae.new_modes(L, D, n_p)
 
         return nu1, zeta

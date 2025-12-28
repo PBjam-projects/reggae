@@ -776,7 +776,7 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
         """ Get the period spacing
         """
         θ_reg = self.get_state()[0]
-        return θ_reg.dPi0 / np.sqrt(2) * UNITS['DPI0']
+        return reggae.ΔΠ1(θ_reg.dPi0)
 
     def get_q(self):
         """Get the classical coupling strength
@@ -787,12 +787,7 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
         Δν = np.power(10, θ_asy.log_dnu)
         νmax = np.power(10, θ_asy.log_numax)
 
-        ω = νmax / 1e6 * 2 * np.pi
-
-        ΔΠ1 = self.get_ΔΠ()
-        α = (UNITS['P_L'] * θ_reg.p_L + UNITS['P_D'] * θ_reg.p_D) * ω**2
-
-        return(α_to_q(α, Δν, ΔΠ1, νmax/1e6))
+        return reggae.q(Δν, νmax, θ_reg.dPi0, θ_reg.p_L, θ_reg.p_D)
 
     def get_ν_p(self):
         """Get the p-mode frequencies
