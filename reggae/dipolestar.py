@@ -88,7 +88,7 @@ class DipoleStar:
         
         self.l1model.n_g = self.select_n_g()
 
-        self.soften = 1
+        self.soften = 1 # Set this to oversampling factor if input power spectrum has been oversampled
 
         self.ID = getattr(star, 'ID', None)
 
