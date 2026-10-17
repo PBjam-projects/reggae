@@ -414,7 +414,7 @@ class ReggaeDebugWindow(QtWidgets.QMainWindow):
         self.console = QtWidgets.QPlainTextEdit()
         self.console.setReadOnly(True)
         self.console.setFont(QtGui.QFont("Monospace"))
-        layout.addWidget(self.console)
+        layout.addRow(self.console)
 
         progress = QtWidgets.QProgressBar()
         layout_right.addWidget(progress)
